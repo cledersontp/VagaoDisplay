@@ -1,137 +1,49 @@
-// VAGAO DISPLAY - Versao 1.0
+// VAGAO DISPLAY - Versao 1.1
 // By Clederson T. Przybysz - clederson_p@yahoo.com.br
 // expressoarduino.blogspot.com
-// Criação: 27/09/2018
-//
+// Criação: 27/09/2018 - Atualizacao 02/02/2019
+// Notas Versão:
+// 1.1: Troca para biblioteca MD_MAX72xx.h e MD_Parola.h para compatibilidade com módulos 4 em 1 de variados fabricantes  
+// 1.0: Criacao codigo;
+//   
 //Copyright Notes Vagao Display:
 // O SOFTWARE É FORNECIDO "NO ESTADO EM QUE SE ENCONTRAM", SEM GARANTIA DE QUALQUER TIPO, EXPRESSA OU IMPLÍCITA, MAS NÃO SE LIMITANDO ÀS GARANTIAS DE COMERCIALIZAÇÃO.  
 // EM NENHUMA CIRCUNSTÂNCIA, O AUTOR/TITULAR DE DIREITOS AUTORAIS SE RESPONSABILIZA POR QUALQUER RECLAMAÇÃO, DANOS OU OUTRA RESPONSABILIDADE, 
 // SEJA EM AÇÃO DE CONTRATO, DELITO OU DE OUTRA FORMA, DECORRENDO DESTE SOFTWARE OU RELACIONADO AO SEU  USO.
 //
 
-#include <MaxMatrix.h>
-#include <avr/pgmspace.h>
+#include <MD_Parola.h>
+#include <MD_MAX72xx.h>
 #include <SPI.h>
 #include <SD.h>
 
-//Matrix de Caracteres
-PROGMEM const unsigned char CH[] = {
-  3, 8, B00000000, B00000000, B00000000, B00000000, B00000000, // space
-  1, 8, B01011111, B00000000, B00000000, B00000000, B00000000, // !
-  3, 8, B00000011, B00000000, B00000011, B00000000, B00000000, // "
-  5, 8, B00010100, B00111110, B00010100, B00111110, B00010100, // #
-  4, 8, B00100100, B01101010, B00101011, B00010010, B00000000, // $
-  5, 8, B01100011, B00010011, B00001000, B01100100, B01100011, // %
-  5, 8, B00110110, B01001001, B01010110, B00100000, B01010000, // &
-  1, 8, B00000011, B00000000, B00000000, B00000000, B00000000, // '
-  3, 8, B00011100, B00100010, B01000001, B00000000, B00000000, // (
-  3, 8, B01000001, B00100010, B00011100, B00000000, B00000000, // )
-  5, 8, B00101000, B00011000, B00001110, B00011000, B00101000, // *
-  5, 8, B00001000, B00001000, B00111110, B00001000, B00001000, // +
-  2, 8, B10110000, B01110000, B00000000, B00000000, B00000000, // ,
-  4, 8, B00001000, B00001000, B00001000, B00001000, B00000000, // -
-  2, 8, B01100000, B01100000, B00000000, B00000000, B00000000, // .
-  4, 8, B01100000, B00011000, B00000110, B00000001, B00000000, // /
-  4, 8, B00111110, B01000001, B01000001, B00111110, B00000000, // 0
-  3, 8, B01000010, B01111111, B01000000, B00000000, B00000000, // 1
-  4, 8, B01100010, B01010001, B01001001, B01000110, B00000000, // 2
-  4, 8, B00100010, B01000001, B01001001, B00110110, B00000000, // 3
-  4, 8, B00011000, B00010100, B00010010, B01111111, B00000000, // 4
-  4, 8, B00100111, B01000101, B01000101, B00111001, B00000000, // 5
-  4, 8, B00111110, B01001001, B01001001, B00110000, B00000000, // 6
-  4, 8, B01100001, B00010001, B00001001, B00000111, B00000000, // 7
-  4, 8, B00110110, B01001001, B01001001, B00110110, B00000000, // 8
-  4, 8, B00000110, B01001001, B01001001, B00111110, B00000000, // 9
-  2, 8, B01010000, B00000000, B00000000, B00000000, B00000000, // :
-  2, 8, B10000000, B01010000, B00000000, B00000000, B00000000, // ;
-  3, 8, B00010000, B00101000, B01000100, B00000000, B00000000, // <
-  3, 8, B00010100, B00010100, B00010100, B00000000, B00000000, // =
-  3, 8, B01000100, B00101000, B00010000, B00000000, B00000000, // >
-  4, 8, B00000010, B01011001, B00001001, B00000110, B00000000, // ?
-  5, 8, B00111110, B01001001, B01010101, B01011101, B00001110, // @
-  4, 8, B01111110, B00010001, B00010001, B01111110, B00000000, // A
-  4, 8, B01111111, B01001001, B01001001, B00110110, B00000000, // B
-  4, 8, B00111110, B01000001, B01000001, B00100010, B00000000, // C
-  4, 8, B01111111, B01000001, B01000001, B00111110, B00000000, // D
-  4, 8, B01111111, B01001001, B01001001, B01000001, B00000000, // E
-  4, 8, B01111111, B00001001, B00001001, B00000001, B00000000, // F
-  4, 8, B00111110, B01000001, B01001001, B01111010, B00000000, // G
-  4, 8, B01111111, B00001000, B00001000, B01111111, B00000000, // H
-  3, 8, B01000001, B01111111, B01000001, B00000000, B00000000, // I
-  4, 8, B00110000, B01000000, B01000001, B00111111, B00000000, // J
-  4, 8, B01111111, B00001000, B00010100, B01100011, B00000000, // K
-  4, 8, B01111111, B01000000, B01000000, B01000000, B00000000, // L
-  5, 8, B01111111, B00000010, B00001100, B00000010, B01111111, // M
-  5, 8, B01111111, B00000100, B00001000, B00010000, B01111111, // N
-  4, 8, B00111110, B01000001, B01000001, B00111110, B00000000, // O
-  4, 8, B01111111, B00001001, B00001001, B00000110, B00000000, // P
-  4, 8, B00111110, B01000001, B01000001, B10111110, B00000000, // Q
-  4, 8, B01111111, B00001001, B00001001, B01110110, B00000000, // R
-  4, 8, B01000110, B01001001, B01001001, B00110010, B00000000, // S
-  5, 8, B00000001, B00000001, B01111111, B00000001, B00000001, // T
-  4, 8, B00111111, B01000000, B01000000, B00111111, B00000000, // U
-  5, 8, B00001111, B00110000, B01000000, B00110000, B00001111, // V
-  5, 8, B00111111, B01000000, B00111000, B01000000, B00111111, // W
-  5, 8, B01100011, B00010100, B00001000, B00010100, B01100011, // X
-  5, 8, B00000111, B00001000, B01110000, B00001000, B00000111, // Y
-  4, 8, B01100001, B01010001, B01001001, B01000111, B00000000, // Z
-  2, 8, B01111111, B01000001, B00000000, B00000000, B00000000, // [
-  4, 8, B00000001, B00000110, B00011000, B01100000, B00000000, // \ backslash
-  2, 8, B01000001, B01111111, B00000000, B00000000, B00000000, // ]
-  3, 8, B00000010, B00000001, B00000010, B00000000, B00000000, // hat
-  4, 8, B01000000, B01000000, B01000000, B01000000, B00000000, // _
-  2, 8, B00000001, B00000010, B00000000, B00000000, B00000000, // `
-  4, 8, B00100000, B01010100, B01010100, B01111000, B00000000, // a
-  4, 8, B01111111, B01000100, B01000100, B00111000, B00000000, // b
-  4, 8, B00111000, B01000100, B01000100, B00101000, B00000000, // c
-  4, 8, B00111000, B01000100, B01000100, B01111111, B00000000, // d
-  4, 8, B00111000, B01010100, B01010100, B00011000, B00000000, // e
-  3, 8, B00000100, B01111110, B00000101, B00000000, B00000000, // f
-  4, 8, B10011000, B10100100, B10100100, B01111000, B00000000, // g
-  4, 8, B01111111, B00000100, B00000100, B01111000, B00000000, // h
-  3, 8, B01000100, B01111101, B01000000, B00000000, B00000000, // i
-  4, 8, B01000000, B10000000, B10000100, B01111101, B00000000, // j
-  4, 8, B01111111, B00010000, B00101000, B01000100, B00000000, // k
-  3, 8, B01000001, B01111111, B01000000, B00000000, B00000000, // l
-  5, 8, B01111100, B00000100, B01111100, B00000100, B01111000, // m
-  4, 8, B01111100, B00000100, B00000100, B01111000, B00000000, // n
-  4, 8, B00111000, B01000100, B01000100, B00111000, B00000000, // o
-  4, 8, B11111100, B00100100, B00100100, B00011000, B00000000, // p
-  4, 8, B00011000, B00100100, B00100100, B11111100, B00000000, // q
-  4, 8, B01111100, B00001000, B00000100, B00000100, B00000000, // r
-  4, 8, B01001000, B01010100, B01010100, B00100100, B00000000, // s
-  3, 8, B00000100, B00111111, B01000100, B00000000, B00000000, // t
-  4, 8, B00111100, B01000000, B01000000, B01111100, B00000000, // u
-  5, 8, B00011100, B00100000, B01000000, B00100000, B00011100, // v
-  5, 8, B00111100, B01000000, B00111100, B01000000, B00111100, // w
-  5, 8, B01000100, B00101000, B00010000, B00101000, B01000100, // x
-  4, 8, B10011100, B10100000, B10100000, B01111100, B00000000, // y
-  3, 8, B01100100, B01010100, B01001100, B00000000, B00000000, // z
-  3, 8, B00001000, B00110110, B01000001, B00000000, B00000000, // {
-  1, 8, B01111111, B00000000, B00000000, B00000000, B00000000, // |
-  3, 8, B01000001, B00110110, B00001000, B00000000, B00000000, // }
-  4, 8, B00001000, B00000100, B00001000, B00000100, B00000000, // ~
-};
-
 
 //Parametros Fixos
-#define  DIN          7   // DIN pin of MAX7219 module
-#define  CLK          6   // CLK pin of MAX7219 module
-#define  CS           5   // CS pin of MAX7219 module
+#define  DATA_PIN    11   // DIN pin of MAX7219 module
+#define  CLK_PIN     13   // CLK pin of MAX7219 module
+#define  CS_PIN      10   // CS pin of MAX7219 module
 #define  maxInUse     4   //Numero de Modulos MAX7219
 #define  brilho       3   //Brilho Display 0 a 15
-#define  velocidade 100   //Velocidade Apresentacao
+#define  HARDWARE_TYPE MD_MAX72XX::FC16_HW   // Modelo do Display: FC16_HW, PAROLA_HW, ICSTATION_HW ou GENERIC_HW 
+#define  BUF_SIZE  70
 
+// HARDWARE SPI
+MD_Parola P = MD_Parola(HARDWARE_TYPE, CS_PIN, maxInUse);
 
 byte LinhaSD=0;
 byte TamanhoString=0;
-byte buffer[10];
-char TextoDisplay[30]; 
+
+//char TextoDisplay[30]; 
+char curMessage[BUF_SIZE] = { "" };
+char newMessage[BUF_SIZE] = { "Expresso Arduino" };
+bool newMessageAvailable = true;
 
 
-//Carrega Instancia do Modulo Matrix
-MaxMatrix m(DIN, CS, CLK, maxInUse);
-
+//Configuraçoes da Exibicao
+uint8_t scrollSpeed = 70;    // default frame delay value
+textEffect_t scrollEffect = PA_SCROLL_LEFT;
+textPosition_t scrollAlign = PA_LEFT;
+uint16_t scrollPause = 1; // in milliseconds
 
 
 void setup() {
@@ -139,8 +51,8 @@ void setup() {
   Serial.begin(19200);
 
   //Inicia Modulos MAX7219
-  m.init(); // module initialize
-  m.setIntensity(brilho); 
+  P.begin();
+  P.displayText(curMessage, scrollAlign, scrollSpeed, scrollPause, scrollEffect, scrollEffect);
 
   //Inicia Cartao SD
   if (!SD.begin(4)) {
@@ -152,43 +64,38 @@ void setup() {
 
 void loop() {
   //Le Cartao SD
-  LeLinhaCartao();
-  //Exibe Mensagem do Linha do Cartao
-  printStringWithShift(TextoDisplay, velocidade); // (texto, velocidade)
-  //Mostra Espaços entre as Linhas do Cartao
-  printStringWithShift("    ", velocidade);
-  //Fim
-  Serial.println("Loop");
-}
-
-//Loop nos Cartecteres do Texto a Ser Exibido no Display
-void printStringWithShift(char* s, int shift_speed) {
-  while (*s != 0) {
-    printCharWithShift(*s, shift_speed);
-    s++;
-  }
-}
-
-// Exibe Caracteres no Display
-void printCharWithShift(char c, int shift_speed) {
-  if (c < 32) return;
-  c -= 32;
-  memcpy_P(buffer, CH + 7 * c, 7);
-  m.writeSprite(32, 0, buffer);
-  m.setColumn(32 + buffer[0], 0);
-  for (int i = 0; i < buffer[0] + 1; i++)
+  //LeLinhaCartao();
+  if (P.displayAnimate())
   {
-    delay(shift_speed);
-    m.shiftLeft(false, false);
+    Serial.println("Le Cartao");
+    LeLinhaCartao();
+    if (newMessageAvailable)
+    {
+      strcpy(curMessage, newMessage);
+      newMessageAvailable = false;
+      Serial.println("Nova Mensagem");
+    }
+    P.displayReset();
   }
+  //readSerial();
+  
+  //Exibe Mensagem do Linha do Cartao
+  //printStringWithShift(TextoDisplay, velocidade); // (texto, velocidade)
+  //Mostra Espaços entre as Linhas do Cartao
+  //printStringWithShift("    ", velocidade);
+  //Fim
+  
 }
+
+
+
 
 //Le Linha do Cartao SD
 void LeLinhaCartao() {
   File myFile;
   byte tmpLinha=0;
   byte LinhaCarregada=0;
-  char StringRetorno[30]; 
+  char StringRetorno[BUF_SIZE]; 
 
   //Abre Arquivo
   myFile = SD.open("display.txt");
@@ -238,8 +145,9 @@ void LeLinhaCartao() {
     if (LinhaCarregada==1) {
       //Avanca Variavel para Proxima Linha do Arquivo
       LinhaSD++;
-      for (int i=0; i<30;i++) {
-        TextoDisplay[i]=StringRetorno[i];
+      for (int i=0; i<BUF_SIZE;i++) {
+        newMessage[i]=StringRetorno[i];
+        newMessageAvailable=true;
         if (StringRetorno[i]==0) {
           TamanhoString=i;
           break;
@@ -248,8 +156,9 @@ void LeLinhaCartao() {
     }
     //Se Não Encontrou a Linha Esperada (Fim do Arquivo) transfere primeira linha armazenada em StringRetorno para varivel TextoDisplay
     else if (tmpLinha>0) {
-      for (int i=0; i<30;i++) {
-        TextoDisplay[i]=StringRetorno[i];
+      for (int i=0; i<BUF_SIZE;i++) {
+        newMessage[i]=StringRetorno[i];
+        newMessageAvailable=true;
         if (StringRetorno[i]==0) {
           TamanhoString=i;
           break;
